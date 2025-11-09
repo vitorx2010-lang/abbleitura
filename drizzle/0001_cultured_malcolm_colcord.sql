@@ -1,0 +1,1 @@
+-- Empty migration file for initial setup
