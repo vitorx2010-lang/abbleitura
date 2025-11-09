@@ -2,6 +2,13 @@
 
 ## Funcionalidades Principais
 
+### GitHub & Repositório
+- [ ] Criar repositório público no GitHub com nome `abbleitura`
+- [ ] Fazer push de todo o código para o repositório
+- [ ] Configurar branches (dev, staging, main)
+- [ ] Configurar protection rules no GitHub
+- [ ] Configurar Husky + commitlint
+
 ### Home Page
 - [ ] Hero section com imagem full bleed, nome do autor, tagline e CTAs
 - [ ] Seção Destaques com slider de livros
@@ -115,7 +122,12 @@
 
 ## Bugs & Problemas Conhecidos
 
-(Nenhum registrado no início do projeto)
+### Pendente de Implementação
+- [ ] Criar repositório GitHub
+- [ ] Fazer push do código
+- [ ] Implementar funcionalidades principais
+- [ ] Executar testes
+- [ ] Gerar relatório final
 
 ## Notas
 
