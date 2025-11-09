@@ -1,0 +1,186 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, staging, main]
+  pull_request:
+    branches: [dev, staging, main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint & Format
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: dist/
+
+  test-unit:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:unit
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: unit-test-results
+          path: coverage/
+
+  test-smoke:
+    runs-on: ubuntu-latest
+    name: Smoke Tests
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:smoke
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: smoke-test-reports
+          path: reports/smoke_*/
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    name: E2E Tests
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+        locale: [pt-BR, en]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm test:e2e --project=${{ matrix.browser }}
+        env:
+          LOCALE: ${{ matrix.locale }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-reports-${{ matrix.browser }}-${{ matrix.locale }}
+          path: reports/e2e_*/
+
+  accessibility:
+    runs-on: ubuntu-latest
+    name: Accessibility Tests
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:a11y
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: accessibility-reports
+          path: reports/a11y_*/
+
+  link-check:
+    runs-on: ubuntu-latest
+    name: Link Validation
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: npm install -g pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: bash scripts/link-check-and-ssl.sh http://localhost:3000
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: link-audit-reports
+          path: reports/link-audit_*/
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+    needs: [lint, build, test-unit, test-smoke]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel (Staging)
+        uses: vercel/action@v4
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          environment-url: https://staging-abbleitura.vercel.app
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [lint, build, test-unit, test-e2e, accessibility, link-check]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel (Production)
+        uses: vercel/action@v4
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          environment-url: https://abbleitura.vercel.app
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          body: |
+            Production deployment successful
+            - Build: ${{ github.sha }}
+            - Branch: ${{ github.ref }}
+            - URL: https://abbleitura.vercel.app
+          draft: false
+          prerelease: false

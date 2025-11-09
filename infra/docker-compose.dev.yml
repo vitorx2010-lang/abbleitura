@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # Frontend Next.js (Development)
+  frontend:
+    build:
+      context: ../
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=mysql://root:password@mysql:3306/abbleitura
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    depends_on:
+      - mysql
+      - redis
+      - minio
+      - maildev
+    volumes:
+      - ../client:/app/client
+      - ../server:/app/server
+      - /app/node_modules
+    networks:
+      - abbleitura-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: abbleitura
+      MYSQL_USER: abbleitura
+      MYSQL_PASSWORD: abbleitura
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - abbleitura-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # MongoDB (Alternativa ao MySQL)
+  mongo:
+    image: mongo:7.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: abbleitura
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - abbleitura-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      timeout: 20s
+      retries: 10
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - abbleitura-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 20s
+      retries: 10
+
+  # MinIO S3 Compatible Storage
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - abbleitura-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      timeout: 20s
+      retries: 10
+
+  # MailDev (Email Testing)
+  maildev:
+    image: maildev/maildev:latest
+    ports:
+      - "1080:1080"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - abbleitura-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1080"]
+      timeout: 20s
+      retries: 10
+
+  # Playwright Runner (para E2E tests)
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.40.0-focal
+    working_dir: /app
+    volumes:
+      - ../:/app
+      - /app/node_modules
+    networks:
+      - abbleitura-network
+    depends_on:
+      - frontend
+    command: npx playwright test
+
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+  minio_data:
+
+networks:
+  abbleitura-network:
+    driver: bridge
