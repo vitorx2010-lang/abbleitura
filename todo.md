@@ -2,19 +2,12 @@
 
 ## Funcionalidades Principais
 
-### GitHub & Repositório
-- [x] Criar repositório público no GitHub com nome `abbleitura`
-- [ ] Fazer push de todo o código para o repositório (em progresso)
-- [ ] Configurar branches (dev, staging, main)
-- [ ] Configurar protection rules no GitHub
-- [ ] Configurar Husky + commitlint
-
 ### Home Page
-- [x] Hero section com imagem full bleed, nome do autor, tagline e CTAs
-- [x] Seção Destaques com slider de livros
-- [x] Seção Últimos posts
-- [x] Newsletter opt-in
-- [x] Microinterações (ProductCard hover lift, heart animation)
+- [ ] Hero section com imagem full bleed, nome do autor, tagline e CTAs
+- [ ] Seção Destaques com slider de livros
+- [ ] Seção Últimos posts
+- [ ] Newsletter opt-in
+- [ ] Microinterações (ProductCard hover lift, heart animation)
 
 ### Header & Footer
 - [ ] Header com logo, navegação, seletor de idioma, theme toggle, login, cart/favorites
@@ -22,12 +15,12 @@
 - [ ] Footer com links, social, newsletter, copyright
 
 ### Catálogo de Livros
-- [x] Página de listagem de livros com paginação (12 por página)
-- [x] Filtros por gênero, ano, idioma
-- [x] Busca fuzzy
-- [x] Página individual de livro com galeria, metadados, botões de compra/download
+- [ ] Página de listagem de livros com paginação (12 por página)
+- [ ] Filtros por gênero, ano, idioma
+- [ ] Busca fuzzy
+- [ ] Página individual de livro com galeria, metadados, botões de compra/download
 - [ ] JSON-LD Book schema
-- [x] Modal de login para download não autenticado
+- [ ] Modal de login para download não autenticado
 
 ### Autenticação & Perfil de Usuário
 - [ ] Registro (nome, email, senha)
@@ -37,11 +30,11 @@
 - [ ] API routes: auth/register, auth/login, auth/refresh, auth/forgot, auth/reset, users/me
 
 ### Painel Admin
-- [x] Login admin (seed com credenciais)
-- [x] Dashboard com KPIs
-- [x] CRUD de livros com upload de arquivos
-- [x] CRUD de posts de blog
-- [x] Moderação de comentários
+- [ ] Login admin (seed com credenciais)
+- [ ] Dashboard com KPIs
+- [ ] CRUD de livros com upload de arquivos
+- [ ] CRUD de posts de blog
+- [ ] Moderação de comentários
 - [ ] Gerenciamento de traduções (auto + manual)
 - [ ] Conteúdo do site (hero slides, footer, promoções)
 - [ ] Configurações (cores, tema padrão, idiomas habilitados, chaves de tradução)
@@ -122,12 +115,7 @@
 
 ## Bugs & Problemas Conhecidos
 
-### Pendente de Implementação
-- [ ] Criar repositório GitHub
-- [ ] Fazer push do código
-- [ ] Implementar funcionalidades principais
-- [ ] Executar testes
-- [ ] Gerar relatório final
+(Nenhum registrado no início do projeto)
 
 ## Notas
 
